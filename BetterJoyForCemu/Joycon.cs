@@ -14,6 +14,10 @@ using Nefarius.ViGEm.Client.Targets.Xbox360;
 
 namespace BetterJoyForCemu {
     public class Joycon {
+		bool rightStickGyro = Boolean.Parse(ConfigurationManager.AppSettings["RightStickGyro"]);
+		bool invertGyroY = Boolean.Parse(ConfigurationManager.AppSettings["InvertGyroY"]);
+		bool zrGyroSwap = Boolean.Parse(ConfigurationManager.AppSettings["ZRGyroSwap"]);
+		bool zrGyroSwitch = Boolean.Parse(ConfigurationManager.AppSettings["ZRGyroSwitch"]);
         float timing = 120.0f;
 
         public string path = String.Empty;
@@ -608,10 +612,28 @@ namespace BetterJoyForCemu {
 
 			if (xin != null) {
                 if (other != null | isPro) {
-                    report.SetAxis(Xbox360Axes.LeftThumbX, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[0] * (stick[0] > 0 ? Int16.MaxValue : -Int16.MinValue))));
-                    report.SetAxis(Xbox360Axes.LeftThumbY, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[1] * (stick[1] > 0 ? Int16.MaxValue : -Int16.MinValue))));
-                    report.SetAxis(Xbox360Axes.RightThumbX, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick2[0] * (stick2[0] > 0 ? Int16.MaxValue : -Int16.MinValue))));
-                    report.SetAxis(Xbox360Axes.RightThumbY, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick2[1] * (stick2[1] > 0 ? Int16.MaxValue : -Int16.MinValue))));
+					if(rightStickGyro && (!zrGyroSwitch || (zrGyroSwitch && buttons[(int)Button.SHOULDER2_2]))) {
+						Vector3 gyro = GetGyro() / 50;
+						if(invertGyroY) {
+							gyro.Y *= -1;
+						}
+						if(buttons[(int)Button.SHOULDER2_2] && zrGyroSwap) {
+                    		report.SetAxis(Xbox360Axes.LeftThumbX, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[0] * (stick[0] > 0 ? Int16.MaxValue : -Int16.MinValue) - gyro.X * (gyro.X > 0 ? Int16.MaxValue : -Int16.MinValue))));
+                    		report.SetAxis(Xbox360Axes.LeftThumbY, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[1] * (stick[1] > 0 ? Int16.MaxValue : -Int16.MinValue) + gyro.Y * (gyro.Y > 0 ? Int16.MaxValue : -Int16.MinValue))));
+							report.SetAxis(Xbox360Axes.RightThumbX, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick2[0] * (stick2[0] > 0 ? Int16.MaxValue : -Int16.MinValue))));
+                    		report.SetAxis(Xbox360Axes.RightThumbY, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick2[1] * (stick2[1] > 0 ? Int16.MaxValue : -Int16.MinValue))));
+						} else {
+							report.SetAxis(Xbox360Axes.LeftThumbX, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[0] * (stick[0] > 0 ? Int16.MaxValue : -Int16.MinValue))));
+                    		report.SetAxis(Xbox360Axes.LeftThumbY, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[1] * (stick[1] > 0 ? Int16.MaxValue : -Int16.MinValue))));
+							report.SetAxis(Xbox360Axes.RightThumbX, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick2[0] * (stick2[0] > 0 ? Int16.MaxValue : -Int16.MinValue) - gyro.X * (gyro.X > 0 ? Int16.MaxValue : -Int16.MinValue))));
+                    		report.SetAxis(Xbox360Axes.RightThumbY, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick2[1] * (stick2[1] > 0 ? Int16.MaxValue : -Int16.MinValue) + gyro.Y * (gyro.Y > 0 ? Int16.MaxValue : -Int16.MinValue))));
+						}
+					} else {
+						report.SetAxis(Xbox360Axes.LeftThumbX, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[0] * (stick[0] > 0 ? Int16.MaxValue : -Int16.MinValue))));
+                    	report.SetAxis(Xbox360Axes.LeftThumbY, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[1] * (stick[1] > 0 ? Int16.MaxValue : -Int16.MinValue))));
+						report.SetAxis(Xbox360Axes.RightThumbX, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick2[0] * (stick2[0] > 0 ? Int16.MaxValue : -Int16.MinValue))));
+                    	report.SetAxis(Xbox360Axes.RightThumbY, (short)Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick2[1] * (stick2[1] > 0 ? Int16.MaxValue : -Int16.MinValue))));
+					}
                 } else { // single joycon mode
                     report.SetAxis(Xbox360Axes.LeftThumbY, (short)((isLeft ? 1 : -1) * Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[0] * (stick[0] > 0 ? Int16.MaxValue : -Int16.MinValue)))));
                     report.SetAxis(Xbox360Axes.LeftThumbX, (short)((isLeft ? -1 : 1) * Math.Max(Int16.MinValue, Math.Min(Int16.MaxValue, stick[1] * (stick[1] > 0 ? Int16.MaxValue : -Int16.MinValue)))));
